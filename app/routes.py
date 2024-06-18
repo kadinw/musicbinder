@@ -32,7 +32,16 @@ def index(request: Request):
         "random_artist": db.get_random_item(),
     }
 
-    return templates.TemplateResponse("main.html", context)
+    if request.header.get("HX-Request"):
+        block_name = "random_artist"
+
+        return templates.TemplateResponse(
+            "main.html",
+            context,
+            block_name=block_name
+        )
+
+    return templates.TemplateResponse("main.html", context, block_name=None)
 
 
 @router.get("/about")
@@ -71,8 +80,13 @@ def catalog(request: Request):
 
     if request.headers.get("HX-Request"):
         id = request.headers.get("HX-Trigger")
+
+        if "profile-" in id:
+            id = id.replace("profile-", "")
+            template = "artist/card.html"
+        else:
+            template = "artist/profile.html"
         artist = db.find("id", int(id))
-        template = "artist/profile.html"
         context["artist"] = artist[0]
 
     return templates.TemplateResponse(template, context)
